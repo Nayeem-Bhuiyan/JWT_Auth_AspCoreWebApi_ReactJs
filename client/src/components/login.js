@@ -48,9 +48,7 @@ const Login = () => {
     if (checkBtn.current.context._errors.length === 0) {
       AuthService.login(username, password).then(
         (data) => {
-          console.log(data);
           if(data.accessToken){
-            const accessToken = JSON.parse(localStorage.getItem('accessToken'));
             navigate("/login");
             window.location.reload();
           }else{

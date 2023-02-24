@@ -1,15 +1,16 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-
+import reportWebVitals from "./reportWebVitals";
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 
-ReactDOM.render(
-  <BrowserRouter>
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(
+<BrowserRouter>
     <App />
-  </BrowserRouter>,
-  document.getElementById("root")
+  </BrowserRouter>
 );
 
 serviceWorker.unregister();
+reportWebVitals();
