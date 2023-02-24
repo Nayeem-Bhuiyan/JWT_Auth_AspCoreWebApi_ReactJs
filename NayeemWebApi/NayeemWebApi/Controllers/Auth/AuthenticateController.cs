@@ -40,7 +40,8 @@ namespace NayeemWebApi.Controllers.Auth
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
             var currentUser = await _userManager.FindByNameAsync(model.Username);
-            if (currentUser == null || !_passwordHasher.VerifyIdentityV3Hash(model.Password, currentUser.PasswordHash)) return Unauthorized(); ;
+            bool isValidPassword = _passwordHasher.VerifyIdentityV3Hash(model.Password, currentUser.PasswordHash);
+            if (currentUser == null || !isValidPassword) return Unauthorized();
     
                 var userRoles = await _userManager.GetRolesAsync(currentUser);
 
