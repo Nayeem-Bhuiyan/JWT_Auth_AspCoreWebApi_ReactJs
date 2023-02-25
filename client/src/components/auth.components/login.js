@@ -44,7 +44,7 @@ const Login = (props) => {
     if (checkBtn.current.context._errors.length === 0) {
       AuthService.login(username, password).then(
         () => {
-          props.history.push("/login");
+          //props.history.push("/login");
           window.location.reload();
         },
         (error) => {
@@ -71,6 +71,7 @@ const Login = (props) => {
           src="//ssl.gstatic.com/accounts/ui/avatar_2x.png"
           alt="profile-img"
           className="profile-img-card"
+          style={{height:"70px",width:"50px"}}
         />
 
         <Form onSubmit={handleLogin} ref={form}>
