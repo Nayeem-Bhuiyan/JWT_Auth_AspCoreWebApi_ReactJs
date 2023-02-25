@@ -1,11 +1,11 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, Route, Routes } from "react-router-dom";
 import "./App.css";
-import Login from "./components/login";
-import Register from "./components/register";
-import AuthService from "./services/auth_service";
 import EventBus from "./common/EventBus";
+import Login from "./components/auth.components/login";
+import Register from "./components/auth.components/register";
+import AuthService from "./services/auth.service/auth.service";
 
 const App = () => {
   const [currentUser, setCurrentUser] = useState(undefined);

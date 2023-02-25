@@ -1,10 +1,8 @@
 import React, { useRef, useState } from "react";
-import { useNavigate } from 'react-router-dom';
 import CheckButton from "react-validation/build/button";
 import Form from "react-validation/build/form";
 import Input from "react-validation/build/input";
-
-import AuthService from "../services/auth_service";
+import AuthService from "../../services/auth.service/auth.service";
 
 const required = (value) => {
   if (!value) {
@@ -16,9 +14,7 @@ const required = (value) => {
   }
 };
 
-const Login = () => {
-  let navigate = useNavigate();
-
+const Login = (props) => {
   const form = useRef();
   const checkBtn = useRef();
 
@@ -47,14 +43,9 @@ const Login = () => {
 
     if (checkBtn.current.context._errors.length === 0) {
       AuthService.login(username, password).then(
-        (data) => {
-          if(data.accessToken){
-            navigate("/login");
-            window.location.reload();
-          }else{
-            alert("Unauthorized");
-          }
-          
+        () => {
+          props.history.push("/login");
+          window.location.reload();
         },
         (error) => {
           const resMessage =
@@ -76,7 +67,11 @@ const Login = () => {
   return (
     <div className="col-md-12">
       <div className="card card-container">
-
+        <img
+          src="//ssl.gstatic.com/accounts/ui/avatar_2x.png"
+          alt="profile-img"
+          className="profile-img-card"
+        />
 
         <Form onSubmit={handleLogin} ref={form}>
           <div className="form-group">
@@ -89,7 +84,6 @@ const Login = () => {
               onChange={onChangeUsername}
               validations={[required]}
             />
-            
           </div>
 
           <div className="form-group">

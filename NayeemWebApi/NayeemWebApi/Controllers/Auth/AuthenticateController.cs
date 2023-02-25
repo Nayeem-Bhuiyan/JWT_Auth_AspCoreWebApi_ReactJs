@@ -67,15 +67,19 @@ namespace NayeemWebApi.Controllers.Auth
             currentUser.RefreshToken = refreshToken;
             currentUser.RefreshTokenExpiryTime =tokenValidTo;
             await _userManager.UpdateAsync(currentUser);
-            UserInfoVm objUserInfoVm = new UserInfoVm
+            user _user = new user
             {
                 accessToken = token,
                 refreshToken = refreshToken,
                 expiration = tokenValidTo,
                 roles=userRoles,
-                user = currentUser,
+                userName = currentUser?.UserName,
+                email = currentUser?.Email,
             };
-           return Ok(objUserInfoVm);
+
+
+
+           return Ok(_user);
         }
 
         [HttpPost]

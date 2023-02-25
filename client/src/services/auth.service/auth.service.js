@@ -1,26 +1,23 @@
-import http from "../http_common";
-
-const API_URL = "/Authenticate/";
+import http from "../common.service/http.common";
+import TokenService from "../common.service/token.service";
 
 const register = (username, email, password) => {
-  return http.post(API_URL + "register", {
+  return http.post("/Authenticate/register", {
     username,
     email,
-    password,
+    password
   });
 };
 
 const login = (username, password) => {
   return http
-    .post(API_URL + "login", {
+    .post("/Authenticate/login", {
       username,
-      password,
+      password
     })
     .then((response) => {
-      console.log(response);
       if (response.data.accessToken) {
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-        localStorage.setItem("accessToken", JSON.stringify(response.data.accessToken));
+        TokenService.setUser(response.data);
       }
 
       return response.data;
@@ -28,8 +25,7 @@ const login = (username, password) => {
 };
 
 const logout = () => {
-  localStorage.removeItem("user");
-  localStorage.removeItem("accessToken");
+  TokenService.removeUser();
 };
 
 const getCurrentUser = () => {
