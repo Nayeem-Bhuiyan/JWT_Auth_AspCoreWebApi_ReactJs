@@ -71,6 +71,7 @@ builder.Services.AddSwaggerGen();
 #region tokenService
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 #endregion
 
 #region Auth identity Related Settings

@@ -6,15 +6,25 @@ namespace NayeemWebApi.Services.AuthDataService
 {
     public class PasswordHasherService: IPasswordHasherService
     {
-        public string GenerateIdentityV3Hash(string password, KeyDerivationPrf prf = KeyDerivationPrf.HMACSHA256, int iterationCount = 10000, int saltSize = 16)
+        public string GenerateIdentityV3Hash(string password, KeyDerivationPrf prf = KeyDerivationPrf.HMACSHA256,int iterationCount = 10000, int saltSize = 16)
         {
             using (var rng = RandomNumberGenerator.Create())
             {
                 var salt = new byte[saltSize];
                 rng.GetBytes(salt);
-
                 var pbkdf2Hash = KeyDerivation.Pbkdf2(password, salt, prf, iterationCount, 32);
-                return Convert.ToBase64String(ComposeIdentityV3Hash(salt, (uint)iterationCount, pbkdf2Hash));
+                string response= Convert.ToBase64String(ComposeIdentityV3Hash(salt, (uint)iterationCount, pbkdf2Hash));
+                return response;
+            }
+        }
+
+        private string CreateSalt(int saltSize)
+        {
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                var salt = new byte[saltSize];
+                rng.GetBytes(salt);
+                return Convert.ToBase64String(salt);
             }
         }
         public bool VerifyIdentityV3Hash(string password, string passwordHash)
@@ -81,36 +91,79 @@ namespace NayeemWebApi.Services.AuthDataService
 
 
 
+
         public string HashPassword(string password)
         {
+            var prf = KeyDerivationPrf.HMACSHA256;
+            var rng = RandomNumberGenerator.Create();
+            const int iterCount = 10000;
+            const int saltSize = 128 / 8;
+            const int numBytesRequested = 256 / 8;
 
-            byte[] salt = new byte[128 / 8];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(salt);
-            }
-            
-            // derive a 256-bit subkey (use HMACSHA1 with 10,000 iterations)
-            string savedPasswordHash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                password: password,
-                salt: salt,
-                prf: KeyDerivationPrf.HMACSHA1,
-                iterationCount: 10000,
-                numBytesRequested: 256 / 8));
-            return savedPasswordHash;
+            // Produce a version 3 (see comment above) text hash.
+            var salt = new byte[saltSize];
+            rng.GetBytes(salt);
+            var subkey = KeyDerivation.Pbkdf2(password, salt, prf, iterCount, numBytesRequested);
+
+            var outputBytes = new byte[13 + salt.Length + subkey.Length];
+            outputBytes[0] = 0x01; // format marker
+            WriteNetworkByteOrder(outputBytes, 1, (uint)prf);
+            WriteNetworkByteOrder(outputBytes, 5, iterCount);
+            WriteNetworkByteOrder(outputBytes, 9, saltSize);
+            Buffer.BlockCopy(salt, 0, outputBytes, 13, salt.Length);
+            Buffer.BlockCopy(subkey, 0, outputBytes, 13 + saltSize, subkey.Length);
+            return Convert.ToBase64String(outputBytes);
         }
 
-        public bool VerifyPassword(string userEnteredPassword, string dbPasswordHash, string dbPasswordSalt)
+        public bool VerifyHashedPassword(string inputPassword, string dbHashedPassword)
         {
+            var decodedHashedPassword = Convert.FromBase64String(dbHashedPassword);
 
-            string hashedPassword = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                password: userEnteredPassword,
-                salt: System.Convert.FromBase64String(dbPasswordSalt),
-                prf: KeyDerivationPrf.HMACSHA1,
-                iterationCount: 10000,
-                numBytesRequested: 256 / 8));
-            Console.WriteLine(hashedPassword.ToString());
-            return dbPasswordHash == hashedPassword;
+            // Wrong version
+            if (decodedHashedPassword[0] != 0x01)
+                return false;
+
+            // Read header information
+            var prf = (KeyDerivationPrf)ReadNetworkByteOrder(decodedHashedPassword, 1);
+            var iterCount = (int)ReadNetworkByteOrder(decodedHashedPassword, 5);
+            var saltLength = (int)ReadNetworkByteOrder(decodedHashedPassword, 9);
+
+            // Read the salt: must be >= 128 bits
+            if (saltLength < 128 / 8)
+            {
+                return false;
+            }
+            var salt = new byte[saltLength];
+            Buffer.BlockCopy(decodedHashedPassword, 13, salt, 0, salt.Length);
+
+            // Read the subkey (the rest of the payload): must be >= 128 bits
+            var subkeyLength = decodedHashedPassword.Length - 13 - salt.Length;
+            if (subkeyLength < 128 / 8)
+            {
+                return false;
+            }
+            var expectedSubkey = new byte[subkeyLength];
+            Buffer.BlockCopy(decodedHashedPassword, 13 + salt.Length, expectedSubkey, 0, expectedSubkey.Length);
+
+            // Hash the incoming password and verify it
+            var actualSubkey = KeyDerivation.Pbkdf2(inputPassword, salt, prf, iterCount, subkeyLength);
+            return actualSubkey.SequenceEqual(expectedSubkey);
+        }
+
+        private static void WriteNetworkByteOrder(byte[] buffer, int offset, uint value)
+        {
+            buffer[offset + 0] = (byte)(value >> 24);
+            buffer[offset + 1] = (byte)(value >> 16);
+            buffer[offset + 2] = (byte)(value >> 8);
+            buffer[offset + 3] = (byte)(value >> 0);
+        }
+
+        private static uint ReadNetworkByteOrder(byte[] buffer, int offset)
+        {
+            return ((uint)(buffer[offset + 0]) << 24)
+                | ((uint)(buffer[offset + 1]) << 16)
+                | ((uint)(buffer[offset + 2]) << 8)
+                | ((uint)(buffer[offset + 3]));
         }
 
 

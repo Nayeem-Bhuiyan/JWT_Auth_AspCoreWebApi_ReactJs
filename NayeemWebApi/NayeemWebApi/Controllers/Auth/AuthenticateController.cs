@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using NayeemWebApi.Helper;
 using NayeemWebApi.ProjectDto.Entity.UserEntity;
 using NayeemWebApi.Services.AuthDataService.Interface;
 using NayeemWebApi.Services.TokenDataService.Interface;
@@ -20,12 +21,14 @@ namespace NayeemWebApi.Controllers.Auth
         private readonly IConfiguration _configuration;
         private readonly ITokenService _tokenService;
         private readonly IPasswordHasherService _passwordHasher;
+        private readonly IAuthService _authService;
         public AuthenticateController(
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager,
             IConfiguration configuration,
             ITokenService tokenService,
-            IPasswordHasherService passwordHasher
+            IPasswordHasherService passwordHasher,
+            IAuthService authService
          )
         {
             _userManager = userManager;
@@ -33,6 +36,7 @@ namespace NayeemWebApi.Controllers.Auth
             _configuration = configuration;
             _tokenService = tokenService;
             _passwordHasher = passwordHasher;
+            _authService = authService;
         }
 
         [HttpPost]
@@ -41,7 +45,8 @@ namespace NayeemWebApi.Controllers.Auth
         {
             var currentUser = await _userManager.FindByNameAsync(model.Username);
             bool isValidPassword = _passwordHasher.VerifyIdentityV3Hash(model.Password, currentUser.PasswordHash);
-            //bool isValidPassword = _passwordHasher.ValidatePassword(model.Password, currentUser.PasswordHash);
+            //bool isValidPassword = _passwordHasher.VerifyHashedPassword(model.Password, currentUser.PasswordHash);
+            //bool isValidPassword = SecretHasher.VerifyPassword(model.Password, currentUser.PasswordHash);
 
 
             if (currentUser == null || !isValidPassword) return Unauthorized();
@@ -94,11 +99,15 @@ namespace NayeemWebApi.Controllers.Auth
             {
                 Email = model.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = model.Username
+                UserName = model.Username,
+                NormalizedUserName = model.Username.ToUpper().ToString()
             };
-            var result = await _userManager.CreateAsync(user, _passwordHasher.GenerateIdentityV3Hash(model.Password));
+            user.PasswordHash =_passwordHasher.GenerateIdentityV3Hash(model.Password);
             //var result = await _userManager.CreateAsync(user, _passwordHasher.HashPassword(model.Password));
-            if (!result.Succeeded)
+            //user.PasswordHash= SecretHasher.GenerateHashPassword(model.Password);
+            //var result = await _userManager.AddPasswordAsync(user, hashPassword);
+            var result = _authService.AddUser(user);
+            if (!result)
             {
 
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
