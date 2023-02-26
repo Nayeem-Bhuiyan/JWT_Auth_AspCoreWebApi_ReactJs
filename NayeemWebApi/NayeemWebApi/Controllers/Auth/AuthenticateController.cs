@@ -113,7 +113,6 @@ namespace NayeemWebApi.Controllers.Auth
             var result = _authService.AddUser(user);
             if (!result)
             {
-
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
             }
             else
