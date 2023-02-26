@@ -9,7 +9,7 @@ namespace NayeemWebApi.Helper
         private const int _iterations = 100000;
         private static readonly HashAlgorithmName _algorithm = HashAlgorithmName.SHA256;
 
-        private const char segmentDelimiter = '+';
+        private const char segmentDelimiter = ':';
 
         public static string GenerateHashPassword(string inputTextPassword)
         {

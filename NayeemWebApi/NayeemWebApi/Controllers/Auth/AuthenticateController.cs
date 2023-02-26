@@ -105,7 +105,9 @@ namespace NayeemWebApi.Controllers.Auth
 
             #region GenerateHashPassword
             user.PasswordHash =_passwordHasher.GenerateIdentityV3Hash(model.Password);
+            //user.PasswordHash =_passwordHasher.GenerateHashPassword(model.Password);
             //user.PasswordHash= SecretHasher.GenerateHashPassword(model.Password);
+
             #endregion
 
             var result = _authService.AddUser(user);
