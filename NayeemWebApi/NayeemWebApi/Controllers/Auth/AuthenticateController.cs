@@ -123,8 +123,6 @@ namespace NayeemWebApi.Controllers.Auth
                 //}
                 await _userManager.AddToRoleAsync(user, UserRoles.User);
             }
-
-
             return Ok(new Response { Status = "Success", Message = "User created successfully!" });
         }
 
