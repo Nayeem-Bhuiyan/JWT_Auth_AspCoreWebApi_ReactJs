@@ -102,10 +102,14 @@ namespace NayeemWebApi.Controllers.Auth
                 UserName = model.Username,
                 NormalizedUserName = model.Username.ToUpper().ToString()
             };
+
+            #region GenerateHashPassword
             user.PasswordHash =_passwordHasher.GenerateIdentityV3Hash(model.Password);
             //var result = await _userManager.CreateAsync(user, _passwordHasher.HashPassword(model.Password));
             //user.PasswordHash= SecretHasher.GenerateHashPassword(model.Password);
             //var result = await _userManager.AddPasswordAsync(user, hashPassword);
+            #endregion
+
             var result = _authService.AddUser(user);
             if (!result)
             {
