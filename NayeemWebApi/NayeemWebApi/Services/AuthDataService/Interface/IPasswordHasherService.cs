@@ -7,6 +7,6 @@ namespace NayeemWebApi.Services.AuthDataService.Interface
         bool VerifyIdentityV3Hash(string password, string passwordHash);
 
         string HashPassword(string password);
-        bool ValidatePassword(string password, string hashedPasswordFromDatabase);
+        bool VerifyPassword(string userEnteredPassword, string dbPasswordHash, string dbPasswordSalt);
     }
 }
